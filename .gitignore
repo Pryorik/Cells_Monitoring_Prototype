@@ -1,0 +1,13 @@
+Debug/
+settings/
+*.dep
+*.ewd
+*.ewp
+*.ewt
+*.log
+*.txt
+*.yat
+*.chm
+*.html
+*.eww
+
