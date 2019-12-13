@@ -6,9 +6,11 @@
 If the ADC is not used for a long time, it is recommended to switch it to power down mode to
 decrease power consumption. This is done by clearing the ADON bit*/
 void ADC_init(void)
-{
-  /*  Init GPIO for ADC1 */
-  GPIO_Init(GPIOD, GPIO_PIN_3|GPIO_PIN_2, GPIO_MODE_IN_FL_NO_IT);
+{  
+  /*  Init GPIO for ADC1 */          /** @ADD AIN0 AIN1 */
+  GPIO_Init(GPIOD, GPIO_PIN_2|GPIO_PIN_3, GPIO_MODE_IN_FL_NO_IT);
+  GPIO_Init(GPIOC, GPIO_PIN_4, GPIO_MODE_IN_FL_NO_IT);
+ 
   /* De-Init ADC 8peripheral*/
   ADC1_DeInit();
   
@@ -18,7 +20,7 @@ void ADC_init(void)
   /* Enable ADC1 Buffer */
   ADC1_DataBufferCmd(ENABLE);
   
-      /* Enable EOC interrupt */
+  /* Enable EOC interrupt */
   ADC1_ITConfig(ADC1_IT_EOCIE, ENABLE);
 
   /* Enable general interrupts */  
@@ -31,7 +33,8 @@ void ADC_init(void)
             ADC1_PRESSEL_FCPU_D18,
             ADC1_EXTTRIG_TIM, DISABLE, 
             ADC1_ALIGN_RIGHT, 
-            ADC1_SCHMITTTRIG_ALL, DISABLE);
+            ADC1_SCHMITTTRIG_CHANNEL0|ADC1_SCHMITTTRIG_CHANNEL1|ADC1_SCHMITTTRIG_CHANNEL2|ADC1_SCHMITTTRIG_CHANNEL3|ADC1_SCHMITTTRIG_CHANNEL4, DISABLE);
+  
   /*Start Conversion */
   ADC1_StartConversion();//double command!! may be clear
 }

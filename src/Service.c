@@ -41,19 +41,6 @@ void Read_ADCval()
   {
       ADC_Ch3.valAvg = filtr(ADC_Ch3.val,&ADC_Ch3.filtr);
       ADC_Ch3.flag_update_val = 0;
-       /*test ADCfiltr-----------------------------*/
-      extern char TxBuffer[];
-      utoa_builtin_div(ADC_Ch3.val,TxBuffer,0);
-      utoa_builtin_div(ADC_Ch3.valAvg,TxBuffer,5);
-      UART4_ITConfig(UART4_IT_TXE, ENABLE);
-      /*-----------------------------test ADCfiltr*/
-      
-//    /*test measurement------------------------------*/
-//    extern char TxBuffer[];
-//    utoa_builtin_div(ADC_Ch3.val,TxBuffer,0);
-//    utoa_builtin_div(measure(ADC_Ch3.val, ADC_Ch3.kmeasure), TxBuffer, 5);
-//    UART4_ITConfig(UART4_IT_TXE, ENABLE);
-//    /*-----------------------------test measurement*/
   }
   
   if(ADC_Ch4.flag_update_val == 1)
@@ -139,11 +126,4 @@ void GetValChannals(void)
         ADC_Ch3.flag_update_val=1;
         ADC_Ch4.val= ADC1_GetBufferValue(4);  //battery four measuring point 
         ADC_Ch4.flag_update_val=1;
-        
-        /*test ADC------------------------------*/
-        //extern char TxBuffer[];
-        //utoa_builtin_div(ADC_Ch3.val,TxBuffer,0);
-        //utoa_builtin_div(ADC_Ch4.val,TxBuffer,5);
-        //UART4_ITConfig(UART4_IT_TXE, ENABLE);
-        /*-----------------------------test ADC*/
 }
