@@ -3,6 +3,6 @@
 #define __INTERRUPT_H
 
 /* Includes ------------------------------------------------------------------*/
-
+void GetValChannals(void);
 
 #endif /* __INTERRUPT_H */

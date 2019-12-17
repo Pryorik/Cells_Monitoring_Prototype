@@ -8,7 +8,7 @@ void UART_init(void)
   //GPIO_Init(GPIOD, GPIO_PIN_6, GPIO_MODE_IN_PU_IT);
   GPIOD->DDR &= ~(1 << 6); //PC2 RX USART1 receive (????)
   GPIOD->DDR |= 1<<5; //PC3 TX USART1 transmit (?????)
-  UART4_Init((uint32_t)115200,
+  UART4_Init((uint32_t)120000,
              UART4_WORDLENGTH_8D,
              UART4_STOPBITS_1, 
              UART4_PARITY_NO,
@@ -21,7 +21,7 @@ void UART_init(void)
   
   /* Enable the UART Transmit complete interrupt: this interrupt is generated 
      when the UART transmit Shift Register is empty */
-  UART4_ITConfig(UART4_IT_TXE, ENABLE);
+  //UART4_ITConfig(UART4_IT_TXE, ENABLE);
 
   /* Enable UART */
   UART4_Cmd(ENABLE);

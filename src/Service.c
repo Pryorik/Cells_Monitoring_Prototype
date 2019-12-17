@@ -14,10 +14,12 @@ ADC ADC_Ch2={.val=0, .flag_update_val =0, .valAvg=0, .kmeasure=1024, .filtr = {.
 ADC ADC_Ch3={.val=0, .flag_update_val =0, .valAvg=0, .kmeasure=1024, .filtr = {.inc=0,.del=0,.flag_FilterReady=0,.flag_CalibrationOK=1,.sum=0,.Adc_old=0,.Adc_now=0}};
 ADC ADC_Ch4={.val=0, .flag_update_val =0, .valAvg=0, .kmeasure=1024, .filtr = {.inc=0,.del=0,.flag_FilterReady=0,.flag_CalibrationOK=1,.sum=0,.Adc_old=0,.Adc_now=0}};
 
+system_TYPE system = {.ID_MCU=0, .ValAvg = {.ch0=&ADC_Ch0.valAvg, .ch1=&ADC_Ch1.valAvg, .ch2=&ADC_Ch2.valAvg, .ch3=&ADC_Ch3.valAvg, .ch4=&ADC_Ch4.valAvg}, .Control={0}};
+
 /**
 * @brief  Read_ADCval.
 **/
-void Read_ADCval()
+void Read_ADCval(void)
 {
   if(ADC_Ch0.flag_update_val == 1)
   {
@@ -50,6 +52,7 @@ void Read_ADCval()
   } 
 
 }
+
 
 /**
 * @brief  measure.
@@ -111,19 +114,3 @@ void CalibrationSens(ADC_filtr *chx)
 	}
 }
 
-/**
-* @brief  GetValChannals.
-**/
-void GetValChannals(void)
-{
-        ADC_Ch0.val= ADC1_GetBufferValue(0);  //zero measuring point 
-        ADC_Ch0.flag_update_val=1;
-        ADC_Ch1.val= ADC1_GetBufferValue(1);  //battery one measuring point 
-        ADC_Ch1.flag_update_val=1;  
-        ADC_Ch2.val= ADC1_GetBufferValue(2);  //battery two measuring point 
-        ADC_Ch2.flag_update_val=1;
-        ADC_Ch3.val= ADC1_GetBufferValue(3);  //battery three measuring point 
-        ADC_Ch3.flag_update_val=1;
-        ADC_Ch4.val= ADC1_GetBufferValue(4);  //battery four measuring point 
-        ADC_Ch4.flag_update_val=1;
-}

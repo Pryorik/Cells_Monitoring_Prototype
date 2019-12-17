@@ -9,6 +9,7 @@
 #include "Flash.h"
 #include "Tests.h"
 #include "Priority.h"
+#include "Check_Tasks.h"
 
 void main(void)
 {
@@ -20,14 +21,14 @@ void main(void)
   //Remap_init();
   //Priority_init();
   
-
-
   while (1)
   {
     //testADC_Value();
     //testADC_Filtr();
     //testADC_Measurement();
     Read_ADCval();
+    Check_Tasks();
+   // Execution_Tasks();
   }
 }
 

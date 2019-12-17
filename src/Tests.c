@@ -20,7 +20,7 @@ void testADC_Value(void)
       extern ADC ADC_Ch3;
       extern ADC ADC_Ch4;
 
-      if( (UART4->CR2 & UART4_CR2_TIEN) == 0 )//if UART_DR empty
+      if( (UART4->CR2 & UART4_CR2_TIEN) == 0 )//if UARTinterrupt_off (UART_DR empty) 
       {
             /*create string for transmission*/
             utoa_builtin_div(ADC_Ch0.val,TxBuffer,0);
