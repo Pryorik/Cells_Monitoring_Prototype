@@ -6,4 +6,5 @@
 
 /* Prototype -----------------------------------------------------------------*/
 void ADC_init(void);
+void _ADC1_DeInit(void);
 #endif /* UART_H */

@@ -4,86 +4,66 @@
 #include "service.h"
 #include "stm8s_uart4.h"
 #include "stm8s_adc1.h"
+#include "Check_Tasks.h"
+#include "Ring_Buffer.h"
+#include "Tests.h"
 /* Private define ------------------------------------------------------------*/
-//define TX_BUFFER_SIZE (countof(TxBuffer)-1)
-#define RX_BUFFER_SIZE 20 //1ComADD+Am+DATA7+1CRS = 9 + spare 11byte
+#define RX_BUFFER_SIZE 100 //1ComADD+Am+DATA7+1CRS = 9 + spare 11byte
+#define TX_BUFFER_SIZE 100 
 /* Private macro -------------------------------------------------------------*/
-//#define countof(a)   (sizeof(a) / sizeof(*(a)))
 
 /* variables ---------------------------------------------------------*/
-//char    TxBuffer[TX_BUFFER_SIZE];
 uint8_t RXBuffer[RX_BUFFER_SIZE];
+uint8_t TXBuffer[TX_BUFFER_SIZE];
+RING_buffer_t TxRingBuf = {.buffer = TXBuffer, .size = TX_BUFFER_SIZE};
+RING_buffer_t RxRingBuf = {.buffer = RXBuffer, .size = RX_BUFFER_SIZE};
+extern system_TYPE system;
 
-
-uint32_t ValueClearCSR=0x20+ADC1_CHANNEL_4;
-
-
-//INTERRUPT_HANDLER(UART4_TX_IRQHandler, 17)
-//{
-//    static uint8_t TxCounter = 0;
-//        
-//    /* Write one byte to the transmit data register */
-//    UART4_SendData8((uint8_t)TxBuffer[TxCounter]);
-//    
-//    TxCounter++;  
-//    /*software clear TXEmpty*/
-//    UART4->SR &= ~UART4_SR_TXE;
-//    
-//    if(TxBuffer[TxCounter-1]=='\r')
-//    {
-//      TxCounter=0;
-//      /* Disable the USART Transmit Complete interrupt */
-//      UART4_ITConfig(UART4_IT_TXE, DISABLE);
-//    }
-//}
-uint8_t *TXBuff_ptr;
-uint8_t AmountByteTX=0;
-INTERRUPT_HANDLER(UART4_TX_IRQHandler, 17)
+/**
+  * @brief  Timer5 Update/Overflow/Break/Trigger Interrupt routine
+  * @param  None
+  * @retval None
+  */
+ uint8_t flag_wait_command=0;
+ extern RING_buffer_t RxRingBuf; 
+ INTERRUPT_HANDLER(TIM5_UPD_OVF_BRK_TRG_IRQHandler, 13)
 {
-    static uint8_t TxCounter = 0;
-    
+  /* In order to detect unexpected events during development,
+     it is recommended to set a breakpoint on the following instruction.
+  */
+  TIM5->SR1 &= (~TIM5_SR1_UIF);
+  if(flag_wait_command==1)
+  {
+      //wfi(); 
+      RING_Clear(&RxRingBuf);
+      uint8_t ByteInPackage = 2;//minimal size packege
+  }
+  flag_wait_command=1;
+}
+INTERRUPT_HANDLER(UART4_TX_IRQHandler, 17)
+{   
     /* Write one byte to the transmit data register */
-    UART4_SendData8((uint8_t)*(TXBuff_ptr+TxCounter));
+    UART4->DR = RING_Pop(&TxRingBuf);
     
-    TxCounter++;  
     /*software clear TXEmpty*/
     UART4->SR &= ~UART4_SR_TXE;
     
-    if((TxCounter) == AmountByteTX)
-    {
-      TxCounter=0;
-      /* Disable the USART Transmit Complete interrupt */
-      UART4_ITConfig(UART4_IT_TXE, DISABLE);
+    if(RING_GetCount(&TxRingBuf) == 0)
+    {/* Disable the USART Transmit Complete interrupt */
+        UART4->CR2&=(~UART4_SR_TXE);//UART4_ITConfig(UART4_IT_TXE, DISABLE); 
     }
 }
 
-
-uint8_t flag_package_ready=0;
-uint8_t AmountByteRX=0;
-uint8_t RxCounter = 0;
 INTERRUPT_HANDLER(UART4_RX_IRQHandler, 18)
-{/*[8bit Command_and_Addr]+[8bit n - amount Data]+n*[8bit DATA] + [8bit CRC]*/ /*EXAMPLE for YAT \d(10 10 1 2 3 4 5 6 7 8 9 10 79)*/
-  UART4->SR &= ~UART4_SR_RXNE;
+{
+/*[3bitCommand+5bitAddr]+[6bitAmountData+2bitDATA]+n*[8bit DATA] + [8bit CRC]*/ 
   
-  /* Read one byte from the receive data register and send it back */
-  RXBuffer[RxCounter] = UART4_ReceiveData8();
-  
-  if(RxCounter==1)//two byte rx is amount byte in package
-  {
-    AmountByteRX = (0x3F&(RXBuffer[RxCounter]>>2)); 
-  }
-
-  RxCounter++;
-  
-  if(RxCounter == AmountByteRX && RxCounter >=1)
-  {
-      RxCounter=0;
-      flag_package_ready=1;
-  }
+  UART4->SR &= ~UART4_SR_RXNE; 
+  RING_PUSH(UART4->DR, RxRingBuf)
+  flag_wait_command=0;
 }
 
-
-
+uint32_t ValueClearCSR=0x20+ADC1_CHANNEL_4;
 INTERRUPT_HANDLER(ADC1_IRQHandler, 22)
 {
         /*clear EOC and rewrite channel. IMPORTANT it need do write BYTE to CSR*/

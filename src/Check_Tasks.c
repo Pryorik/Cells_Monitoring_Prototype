@@ -4,87 +4,174 @@
 #include "Service.h"
 #include "ADC.h"
 #include "UART.h"
-
+#include "Flash.h"
+#include "GPIO.h"
+#include "Ring_Buffer.h"
 /* Private define ------------------------------------------------------------*/
 
 /* Private macro -------------------------------------------------------------*/
 
 /* INIT-----------------------------------------------------------------------*/
 extern system_TYPE system;
-
+uint8_t ByteInPackage = 2;//minimal size packege
 void Check_Tasks(void)
 {
-  extern uint8_t AmountByteRX;
-  extern uint8_t AmountByteTX;
-  extern uint8_t flag_package_ready;
-  extern uint8_t RXBuffer[];
-  extern uint8_t *TXBuff_ptr;
-  extern uint8_t RxCounter;
-    
-  parsing ParsResult; 
-  static uint8_t TXBuffer[20];//1ComADD+Am+DATA7+1CRS = 9 + spare 11byte
+  extern RING_buffer_t RxRingBuf;  
+  extern RING_buffer_t TxRingBuf; 
   
-  if(flag_package_ready)
+  static uint8_t flag_package_ready=0;
+  parsing ParsResult; 
+  
+  
+
+//  uint8_t GetCountTX = RING_GetCount(&TxRingBuf);
+//  if(GetCountTX>0)
+//  {/*Enable Interrupt USART Transmit Complete*/
+//    
+////    /*TEST RING_BUFF_TX_OVERFULL*/
+////    volatile static uint16_t max_size_TX_include = 0;
+////    if(GetCountTX>max_size_TX_include) max_size_TX_include=GetCountTX;
+////    /*TEST RING_BUFF_TX_OVERFULL*/
+//      
+//    UART4->CR2|=(UART4_SR_TXE);
+//  } 
+  uint8_t GetCountRX = RING_GetCount(&RxRingBuf);
+  if( (flag_package_ready==0) && (GetCountRX >= ByteInPackage) )
   {
-      ParsResult = Parsing_RX_Package();
-      if(ParsResult.ERROR==0)
-      {/*If CRC was RIGHT, check ID*/
-          if(ParsResult.ID==system.ID_MCU)//----------------------------------------------MCU_ID
-          {/*If ID was my, execute command*/
-                  switch(ParsResult.Command)
-                  {
-                    case SEND_MEASUREMENTS:          //test \d(33 12 170)
-                      {
-                        AmountByteTX = pack_DATA_ADC( RXBuffer[0],TXBuffer );
-                        TXBuff_ptr   = &TXBuffer[0];
-                        UART4_ITConfig(UART4_IT_TXE, ENABLE);               
-                        break;
-                      }
-                    default:
-                      break;
-                  }
-          }
-          else
-          {
-                if(ParsResult.ID==ALL_ID)//----------------------------------------------ALL_ID
-                {/*If ID was common, execute command*/
-                      switch(ParsResult.Command)
-                      {
-                        case SEND_MEASUREMENTS:          //test \d(63 12 94)
-                          {
-                            AmountByteTX = pack_DATA_ADC((ParsResult.ID|(0XE0&RXBuffer[0])),TXBuffer);
-                            TXBuff_ptr   = &TXBuffer[0];
-                            UART4_ITConfig(UART4_IT_TXE, ENABLE);  
-                            
-                            while( (UART4->CR2 & UART4_CR2_TIEN) != 0 )//if UARTinterrupt_off (UART_DR empty) 
-                            {
-                              ;
-                            }
-                            TXBuffer[0] = (uint8_t)ALL_ID|((uint8_t)SEND_MEASUREMENTS<<5);                           
-                            TXBuffer[1] = 3<<2;
-                            TXBuffer[2] = FoundCRC(TXBuffer,3); 
-                            AmountByteTX = 3;
-                            TXBuff_ptr   = &TXBuffer[0];
-                            UART4_ITConfig(UART4_IT_TXE, ENABLE);  
-                            break;
-                          }
-                        default:
-                          break;
-                      }
-                }
-                else//-------------------------------------------------------------------Other_ID
-                {/*If ID was other, pass PACK up*/
-                  AmountByteTX=AmountByteRX;
-                  TXBuff_ptr  = &RXBuffer[0];
-                  UART4_ITConfig(UART4_IT_TXE, ENABLE);//test \d(35 12 35)
-                }
-          }
+//      /*TEST RING_BUFF_RX_OVERFULL*/
+//      volatile static uint16_t max_size_RX_include = 0;
+//      if(GetCountRX>max_size_RX_include) max_size_RX_include=GetCountRX;
+//      /*TEST RING_BUFF_RX_OVERFULL*/
+      
+      ByteInPackage = 0x3F & (RING_ShowSymbol(1,&RxRingBuf)>>2);
+      if( ByteInPackage!=3 && ByteInPackage!=4 && ByteInPackage!=9)
+      {/*Check Error*/
+          RING_Clear(&RxRingBuf);
+          ByteInPackage=2;
       }
       else
-      {/*found ERROR in Parsing*/
-       // RxCounter=0;//clear counter Reciver
+      {
+          uint8_t ID = 0x1F &RING_ShowSymbol(0,&RxRingBuf);
+          if( (ID != system.ID_MCU) && (ID != ALL_ID) )
+          {/*retransmission*/
+              
+              for(int i=0; i < ByteInPackage;i++)
+              { 
+                while( RING_GetCount(&RxRingBuf)==0 )
+                {//wait RxDATA
+                  ;
+                }
+                  RING_Push(RING_Pop(&RxRingBuf), &TxRingBuf);
+              }
+              UART4->CR2|=(UART4_SR_TXE);
+              ByteInPackage=2;//minimal size packege
+          }
+          else
+          {/*For ALL or my ID*/
+              if( GetCountRX >= ByteInPackage)
+              {
+                      flag_package_ready=1;
+                      ByteInPackage=2;//minimal size packege
+              }
+          }
       }
-      flag_package_ready=0;
+  }
+   
+  if(flag_package_ready==1)
+  {
+    extern uint8_t flag_wait_command;
+    flag_wait_command=0;
+    
+    ParsResult = Parsing_RX_Package(&RxRingBuf);
+    if(ParsResult.ERROR==0)
+    {/*If CRC was RIGHT, check ID*/
+      if(ParsResult.ID==system.ID_MCU)//--------------------------------------------------------------MCU_ID
+      {/*If ID was my, execute command*/
+              switch(ParsResult.Command)
+              {
+              case SEND_MEASUREMENTS:          //test \d(33 12 170) \d(34 12 196)
+                {
+                  uint8_t Out_Buffer[10];
+                  uint8_t AmountByteTX = pack_DATA_ADC(ParsResult.BuffPackage[0],Out_Buffer);                 
+                  SEND(Out_Buffer, AmountByteTX);
+                  break;
+                }
+              case BALLANCING_B1:              //test  \d(65 12 16)
+                {
+                  GPIO_WriteReverse(BALANCING_1_PORT,BALANCING_1_PIN);  
+                  system.Control.BalancingBattery1^=1;
+                  break;
+                }
+              case BALLANCING_B2:              //test  \d(97 12 254)
+                {
+                  GPIO_WriteReverse(BALANCING_2_PORT,BALANCING_2_PIN);  
+                  system.Control.BalancingBattery2^=1;
+                  break;
+                }  
+              case BALLANCING_B3:              //test  \d(129 12 100)
+                {
+                  GPIO_WriteReverse(BALANCING_3_PORT,BALANCING_3_PIN);  
+                  system.Control.BalancingBattery3^=1;
+                  break;
+                }       
+              case BALLANCING_B4:              //test  \d(161 12 18)
+                {
+                  GPIO_WriteReverse(BALANCING_4_PORT,BALANCING_4_PIN);  
+                  system.Control.BalancingBattery4^=1;
+                  break;
+                }  
+              default:
+                break;
+              }
+      }
+      if(ParsResult.ID==ALL_ID)//---------------------------------------------------------------------ALL_ID
+      {/*If ID was common, execute command*/                 
+              switch(ParsResult.Command)
+              {
+              case SEND_MEASUREMENTS:          //test \d(63 12 94)
+                {
+                  uint8_t Out_Buffer[10];
+                  uint8_t AmountByteTX = pack_DATA_ADC((system.ID_MCU|(0xE0&ParsResult.BuffPackage[0])),Out_Buffer);
+                  SEND(Out_Buffer, AmountByteTX);
+                  SEND(ParsResult.BuffPackage, ParsResult.AmoundByte);
+                  break;
+                }
+              case Get_ID:                     //test \d(127 16 1 156)
+                {
+                  if(ParsResult.BuffPackage[2]>0 && ParsResult.BuffPackage[2]<=26)
+                  {
+                    system.ID_MCU=ParsResult.BuffPackage[2];
+                    Write_Adress(ParsResult.BuffPackage[2]);   
+                  }
+                  else
+                  {
+                    /*The address is not in the specified interval [1:26]*/  
+                  }
+                  
+                  ParsResult.BuffPackage[2] += 1;
+                  ParsResult.BuffPackage[3] = FoundCRC(ParsResult.BuffPackage,4);
+                  
+                  SEND(ParsResult.BuffPackage, ParsResult.AmoundByte);
+                  
+                  break;
+                }
+              default:
+                break;
+              }
+      }
+//      if(ParsResult.ID!=ALL_ID && ParsResult.ID!=system.ID_MCU)//------------------------------------Other_ID
+//      {/*If ID was other, pass PACK up*/
+//        for(int i=0; i < ParsResult.AmoundByte;i++)
+//        {
+//          RING_Push(ParsResult.BuffPackage[i], &TxRingBuf);
+//        }
+//      }
+    }
+    else
+    {/*found ERROR in Parsing*/
+      // RxCounter=0;//clear counter Reciver
+    }
+    flag_package_ready=0;
   }
 }
 
@@ -94,16 +181,12 @@ uint8_t pack_DATA_ADC(uint8_t Comand_and_ID, uint8_t *Buf)
       extern ADC ADC_Ch1;
       extern ADC ADC_Ch2;
       extern ADC ADC_Ch3;
-      extern ADC ADC_Ch4;
+      extern ADC ADC_Ch4; 
       
-      uint8_t AmountByteTX;
-  
-      AmountByteTX=1+7+1;//Comand_and_ID(1byte) + AmountByte6bit_DATA50bit(7byte) + CRC(1byte)
-      
+      uint8_t AmountByte=1+7+1;//Comand_and_ID(1byte) + AmountByte6bit_DATA50bit(7byte) + CRC(1byte);
       Buf[0]=Comand_and_ID;
       
-      Buf[1]=0;
-      Buf[1] = 0xFC&(AmountByteTX<<2);//AmountByte in pack
+      Buf[1] = 0xFC&(AmountByte<<2);//AmountByte in pack
       
       uint16_t val[5];
       val[0] = ADC_Ch0.valAvg;
@@ -128,44 +211,45 @@ uint8_t pack_DATA_ADC(uint8_t Comand_and_ID, uint8_t *Buf)
             j++;
             k++;
       }
-      Buf[AmountByteTX-1] = FoundCRC(Buf,AmountByteTX); 
+      Buf[AmountByte-1] = FoundCRC(Buf,AmountByte);
       
-      return AmountByteTX;
+      return AmountByte;
 }
 
-parsing Parsing_RX_Package(void)
+parsing Parsing_RX_Package(RING_buffer_t *Buff)
 {
-  extern uint8_t RXBuffer[];
-  extern uint8_t AmountByteRX;
   parsing ParsResult; 
+
+  ParsResult.BuffPackage[0] = RING_Pop(Buff);
+  ParsResult.BuffPackage[1] = RING_Pop(Buff);
+  ParsResult.Command = (ParsResult.BuffPackage[0]>>5) & 0x7;
+  ParsResult.ID = ParsResult.BuffPackage[0] & 0x1F;
+  ParsResult.AmoundByte= 0x3F&(ParsResult.BuffPackage[1]>>2);
+  for(int i=2;i<ParsResult.AmoundByte;i++)
+  {
+        ParsResult.BuffPackage[i] = RING_Pop(Buff);
+  }
   
-  ParsResult.Command = (RXBuffer[0]>>5) & 0x7;
-  ParsResult.ID = RXBuffer[0] & 0x1F;
   ParsResult.ERROR=0;
-  
   uint8_t CRC=0;
-  CRC = FoundCRC(RXBuffer, AmountByteRX);
+  CRC = FoundCRC(ParsResult.BuffPackage, ParsResult.AmoundByte);
   
-  if(CRC != RXBuffer[AmountByteRX-1] )
+  if(CRC != ParsResult.BuffPackage[ParsResult.AmoundByte-1] )
   {
       ParsResult.ERROR|=ERROR_CRC;
   }
   
-  if(ParsResult.ID == system.ID_MCU && AmountByteRX>3)
-  {
-      ParsResult.ERROR|=ERROR_AmountByteInCommand;
-  }
   return ParsResult;
 }
 
-uint8_t FoundCRC(uint8_t *Buff, uint8_t amountByte)
+uint8_t FoundCRC(uint8_t *Buff, uint8_t AmoundByte)
 {
-  uint16_t CRC=0;
-    for(int i=0; i<(amountByte-1);i++)
-  {
-      CRC+= Buff[i]*44111;
-      
+  uint16_t CRC = 0;
+  
+  for(int i=0; i<(AmoundByte-1);i++)
+  { 
+      CRC+= Buff[i]*44111;   
   }
-  CRC = CRC ^ (CRC >> 8); 
-  return CRC = CRC & 0xFF;
+  CRC = (CRC ^ (CRC >> 8)); 
+  return (uint8_t)CRC;
 }

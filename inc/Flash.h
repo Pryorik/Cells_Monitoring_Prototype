@@ -7,9 +7,11 @@
 #define ADDR_ID 0x4001
 #define ADDR_OPT2 0x4803
 /* Includes -------------------------------------------------------------------*/
+#include "stm8s.h"
 /* Structure ------------------------------------------------------------------*/
 
 /* Prototype -----------------------------------------------------------------*/
-void Adrecc_init(void);
+void Write_Adress(uint8_t ID);
+void Adress_init(void);
 void Remap_init(void);
 #endif /* FLASH_H */

@@ -10,6 +10,7 @@
 #include "Tests.h"
 #include "Priority.h"
 #include "Check_Tasks.h"
+#include "stm8s_tim5.h"
 
 void main(void)
 {
@@ -17,18 +18,26 @@ void main(void)
   GPIO_init();
   ADC_init();
   UART_init();
-  Adrecc_init();
-  //Remap_init();
-  //Priority_init();
-  
+  Adress_init();
+  Remap_init();
+  Priority_init();
+  TIM5_TimeBaseInit(TIM5_PRESCALER_32768,(uint16_t)500);
+  TIM5->CR1 |= TIM5_CR1_CEN ;
+  TIM5->IER |= (uint8_t)TIM5_IT_UPDATE;
   while (1)
   {
-    //testADC_Value();
-    //testADC_Filtr();
-    //testADC_Measurement();
-    Read_ADCval();
-    Check_Tasks();
-   // Execution_Tasks();
+    //GPIOD->ODR &= (uint8_t)(~UART_TX_PIN);
+    //GPIOD->ODR |= (uint8_t)(UART_TX_PIN);   
+    //GPIOB->ODR &= (uint8_t)(~LED_GPIO_PINS);
+    //GPIOB->ODR |= (uint8_t)(LED_GPIO_PINS);
+    
+   //testADC_Value();
+  // testADC_Filtr();
+   //testADC_Measurement();
+   //testLED();
+   //Read_ADCval();
+   // wfi();
+   Check_Tasks();
   }
 }
 

@@ -49,7 +49,6 @@ typedef struct {
 }system_TYPE;
 
 /* Prototype -----------------------------------------------------------------*/
-int16_t measure(uint16_t ADCavg, uint16_t kmeasure);
 uint16_t filtr(uint16_t ADCval, ADC_filtr *chx);
 void CalibrationSens(ADC_filtr *chx);
 void Read_ADCval(void);

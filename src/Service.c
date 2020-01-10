@@ -23,51 +23,41 @@ void Read_ADCval(void)
 {
   if(ADC_Ch0.flag_update_val == 1)
   {
+      //ADC_Ch0.valAvg=2;
       ADC_Ch0.valAvg = filtr(ADC_Ch0.val,&ADC_Ch0.filtr);
       ADC_Ch0.flag_update_val = 0;
   }
   
   if(ADC_Ch1.flag_update_val == 1)
   {
+      //ADC_Ch1.valAvg=3;
       ADC_Ch1.valAvg = filtr(ADC_Ch1.val,&ADC_Ch1.filtr);
       ADC_Ch1.flag_update_val = 0;
   }
   
   if(ADC_Ch2.flag_update_val == 1)
   {
+      //ADC_Ch2.valAvg=4;
       ADC_Ch2.valAvg = filtr(ADC_Ch2.val,&ADC_Ch2.filtr);
       ADC_Ch2.flag_update_val = 0;
   }
   
   if(ADC_Ch3.flag_update_val == 1)
   {
+      //ADC_Ch3.valAvg=5;
       ADC_Ch3.valAvg = filtr(ADC_Ch3.val,&ADC_Ch3.filtr);
       ADC_Ch3.flag_update_val = 0;
   }
   
   if(ADC_Ch4.flag_update_val == 1)
   {
+      //ADC_Ch4.valAvg=6;
       ADC_Ch4.valAvg = filtr(ADC_Ch4.val,&ADC_Ch4.filtr);
       ADC_Ch4.flag_update_val = 0;
   } 
 
 }
 
-
-/**
-* @brief  measure.
-**/
-int16_t measure(uint16_t ADCavg, uint16_t kmeasure)
-{
-		if ((ADCavg <= 10))//32mV
-		{ 
-			return 0;
-		}
-		else
-		{
-			return (((uint32_t)ADCavg*3300) / kmeasure);
-		}
-}
 
 /**
 * @brief  filtr.
@@ -95,10 +85,10 @@ uint16_t filtr(uint16_t ADCval, ADC_filtr *chx)
 	}
 	chx->Adc_now = chx->sum / chx->del;
         
-        if(chx->flag_FilterReady == 1 && chx->flag_CalibrationOK == 0)
-	{
-		CalibrationSens(chx);
-	}
+//        if(chx->flag_FilterReady == 1 && chx->flag_CalibrationOK == 0)
+//	{
+//		CalibrationSens(chx);
+//	}
         
 	return chx->Adc_now;
 }

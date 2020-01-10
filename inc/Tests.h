@@ -10,7 +10,7 @@
 void testADC_Value(void);
 void testADC_Filtr(void);
 void testADC_Measurement(void);
-void Delay(uint32_t nCount);
 void testLED(void);
-
+void Delay(uint32_t nCount);
+int16_t measure(uint32_t ADCavg, uint16_t kmeasure);
 #endif /* TESTS_H */
