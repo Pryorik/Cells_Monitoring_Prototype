@@ -3,7 +3,7 @@
 #include "UART.h"
 #include "Ring_Buffer.h"
 #include "Interrupt.h"
-
+#include "GPIO.h"
 void UART_init(void)
 {
 //  UART4_Init((uint32_t)921600,
@@ -13,7 +13,7 @@ void UART_init(void)
 //             UART4_SYNCMODE_CLOCK_DISABLE, 
 //             UART4_MODE_TXRX_ENABLE);
   
-  uint32_t BaudRate=921600;
+  uint32_t BaudRate=460800;
   uint8_t BRR2_1 = 0, BRR2_2 = 0;
   uint32_t BaudRate_Mantissa = 0, BaudRate_Mantissa100 = 0;
   /* Clear the word length bit */
@@ -91,7 +91,7 @@ void UART_init(void)
   enableInterrupts();
 }
 
-
+#include "Tests.h"
 /*Writes four number"value" in string "buffer". 
 "ofset" shifting relative to the zero element char* /
 nominal ofset = 4*/
@@ -114,16 +114,28 @@ void utoa_builtin_div(uint16_t value, char *buffer, int ofset)
    }
 }
 
+//uint16_t max_size_TX_include=0;
 void SEND(uint8_t *Buff, uint8_t AmountByteTX)
 {
-    
-    
+    //testLED();
+    static uint16_t led_counter=0;
+    led_counter++;
+    if(led_counter>10)
+    {
+      led_counter=0;
+      //LED_GPIO_PORT->ODR &= (uint8_t)(~LED_GPIO_PINS);
+      testLED();
+    }
     extern RING_buffer_t TxRingBuf; 
     
     for(int i=0; i < AmountByteTX;i++)
     {
       RING_Push(Buff[i], &TxRingBuf); 
     }
+//    /*TEST RING_BUFF_TX_OVERFULL*/
+//    uint8_t GetCountTX1 = RING_GetCount(&TxRingBuf);
+//    if(GetCountTX1>max_size_TX_include) max_size_TX_include=GetCountTX1;
+//    /*TEST RING_BUFF_TX_OVERFULL*/
     UART4->CR2|=(UART4_SR_TXE);
 
 }

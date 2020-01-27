@@ -8,7 +8,7 @@
 void myGPIO_Init(GPIO_TypeDef* GPIOx, GPIO_Pin_TypeDef GPIO_Pin, GPIO_Mode_TypeDef GPIO_Mode);
 /* Define --------------------------------------------------------------------*/
 #define LED_GPIO_PORT  (GPIOB)
-#define LED_GPIO_PINS  (GPIO_PIN_4)
+#define LED_GPIO_PINS  (GPIO_PIN_5)
 
 #define BALANCING_1_PORT (GPIOA)// DIVIDER_EN_PORT
 #define BALANCING_1_PIN  (GPIO_PIN_2)

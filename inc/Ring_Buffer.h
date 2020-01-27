@@ -23,8 +23,9 @@ typedef struct
     fifobuf.buffer[fifobuf.idxIn++] = fifosymbol;\
     if (fifobuf.idxIn >= fifobuf.size) fifobuf.idxIn = 0;\
   }
-  
-#define RING_POP(fifobuf)\
+
+//uint8_t retval = buf->buffer[buf->idxOut];  
+#define RING_POP_inx(fifobuf)\
   {\
     fifobuf.idxOut++;\
     if (fifobuf.idxOut >= fifobuf.size) fifobuf.idxOut = 0;\

@@ -60,6 +60,8 @@ void testADC_Filtr(void)
         
         /*create string for transmission*/
         utoa_builtin_div(ADC_Ch0.valAvg,Out_Buffer,0);
+//        Out_Buffer[4]='\n';
+//        Out_Buffer[5]='\r';
         Out_Buffer[4]=' ';
         utoa_builtin_div(ADC_Ch1.valAvg,Out_Buffer,5);
         Out_Buffer[9]=' ';
@@ -71,12 +73,14 @@ void testADC_Filtr(void)
         Out_Buffer[24]='\n';
         Out_Buffer[25]='\r';
         
-        for(int i=0;i<26;i++)
-        {
-          RING_Push((uint8_t)Out_Buffer[i],&TxRingBuf);
-        }
-        
-        UART4_ITConfig(UART4_IT_TXE, ENABLE);
+//        SEND(Out_Buffer, 6);
+          SEND(Out_Buffer, 26);
+//        for(int i=0;i<26;i++)
+//        {
+//          RING_Push((uint8_t)Out_Buffer[i],&TxRingBuf);
+//        }
+//        
+//        UART4_ITConfig(UART4_IT_TXE, ENABLE);
         
 //        /*create string for transmission*/
 //        utoa_builtin_div(ADC_Ch4.val,Out_Buffer,0);
@@ -151,7 +155,7 @@ void testADC_Measurement(void)
 void testLED(void)
 {/* Toggles LEDs */
       GPIO_WriteReverse(LED_GPIO_PORT, (GPIO_Pin_TypeDef)LED_GPIO_PINS);  
-      Delay(0xFFFF); 
+      //Delay(0xFFFF); 
 }
 
 /**

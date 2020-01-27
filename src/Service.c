@@ -23,36 +23,37 @@ void Read_ADCval(void)
 {
   if(ADC_Ch0.flag_update_val == 1)
   {
-      //ADC_Ch0.valAvg=2;
       ADC_Ch0.valAvg = filtr(ADC_Ch0.val,&ADC_Ch0.filtr);
+      //ADC_Ch0.valAvg=1;
       ADC_Ch0.flag_update_val = 0;
+      //testLED();
   }
   
   if(ADC_Ch1.flag_update_val == 1)
   {
-      //ADC_Ch1.valAvg=3;
       ADC_Ch1.valAvg = filtr(ADC_Ch1.val,&ADC_Ch1.filtr);
+      //ADC_Ch1.valAvg=2;
       ADC_Ch1.flag_update_val = 0;
   }
   
   if(ADC_Ch2.flag_update_val == 1)
   {
-      //ADC_Ch2.valAvg=4;
       ADC_Ch2.valAvg = filtr(ADC_Ch2.val,&ADC_Ch2.filtr);
+//      ADC_Ch2.valAvg=3;
       ADC_Ch2.flag_update_val = 0;
   }
   
   if(ADC_Ch3.flag_update_val == 1)
   {
-      //ADC_Ch3.valAvg=5;
       ADC_Ch3.valAvg = filtr(ADC_Ch3.val,&ADC_Ch3.filtr);
+//      ADC_Ch3.valAvg=4;
       ADC_Ch3.flag_update_val = 0;
   }
   
   if(ADC_Ch4.flag_update_val == 1)
   {
-      //ADC_Ch4.valAvg=6;
       ADC_Ch4.valAvg = filtr(ADC_Ch4.val,&ADC_Ch4.filtr);
+//      ADC_Ch4.valAvg=5;
       ADC_Ch4.flag_update_val = 0;
   } 
 

@@ -13,9 +13,11 @@ void Priority_init(void)
 {
     disableInterrupts();
     /*Software priority*/
-    ITC_SetSoftwarePriority(ITC_IRQ_ADC1,     ITC_PRIORITYLEVEL_1);
-    ITC_SetSoftwarePriority(ITC_IRQ_UART4_TX, ITC_PRIORITYLEVEL_2);
-    ITC_SetSoftwarePriority(ITC_IRQ_UART4_RX, ITC_PRIORITYLEVEL_3);//need top priority for stability recive data
+    ITC_SetSoftwarePriority(ITC_IRQ_ADC1,        ITC_PRIORITYLEVEL_1);
+    ITC_SetSoftwarePriority(ITC_IRQ_TIM5_OVFTRI, ITC_PRIORITYLEVEL_1);
+    ITC_SetSoftwarePriority(ITC_IRQ_UART4_TX,    ITC_PRIORITYLEVEL_2);
+    ITC_SetSoftwarePriority(ITC_IRQ_UART4_RX,    ITC_PRIORITYLEVEL_3);//need top priority for stability recive data
+    
     enableInterrupts();
 }
 

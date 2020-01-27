@@ -8,8 +8,8 @@
 #include "Ring_Buffer.h"
 #include "Tests.h"
 /* Private define ------------------------------------------------------------*/
-#define RX_BUFFER_SIZE 100 //1ComADD+Am+DATA7+1CRS = 9 + spare 11byte
-#define TX_BUFFER_SIZE 100 
+#define RX_BUFFER_SIZE 40 //1ComADD+Am+DATA7+1CRS = 9 + spare 11byte
+#define TX_BUFFER_SIZE 40 
 /* Private macro -------------------------------------------------------------*/
 
 /* variables ---------------------------------------------------------*/
@@ -32,14 +32,16 @@ extern system_TYPE system;
      it is recommended to set a breakpoint on the following instruction.
   */
   TIM5->SR1 &= (~TIM5_SR1_UIF);
-  if(flag_wait_command==1)
-  {
-      //wfi(); 
-      RING_Clear(&RxRingBuf);
-      uint8_t ByteInPackage = 2;//minimal size packege
-  }
-  flag_wait_command=1;
+  Check_Tasks();
+//  if(flag_wait_command==1)
+//  {
+//      //wfi(); 
+//      RING_Clear(&RxRingBuf);
+//      uint8_t ByteInPackage = 2;//minimal size packege
+//  }
+//  flag_wait_command=1;
 }
+
 INTERRUPT_HANDLER(UART4_TX_IRQHandler, 17)
 {   
     /* Write one byte to the transmit data register */
@@ -66,10 +68,17 @@ INTERRUPT_HANDLER(UART4_RX_IRQHandler, 18)
 uint32_t ValueClearCSR=0x20+ADC1_CHANNEL_4;
 INTERRUPT_HANDLER(ADC1_IRQHandler, 22)
 {
+        static uint8_t counter_devided=0;
+        
         /*clear EOC and rewrite channel. IMPORTANT it need do write BYTE to CSR*/
         ADC1->CSR = ValueClearCSR;
         /* Get converted value scan continuous mode*/
-        GetValChannals();
+        if(counter_devided==0) 
+        {
+          GetValChannals();
+        }
+        counter_devided++;
+        if(counter_devided==5) counter_devided=0;
  }
 
 /**

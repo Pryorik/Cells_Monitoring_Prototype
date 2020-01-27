@@ -21,8 +21,8 @@ void main(void)
   Adress_init();
   Remap_init();
   Priority_init();
-  TIM5_TimeBaseInit(TIM5_PRESCALER_32768,(uint16_t)500);
-  TIM5->CR1 |= TIM5_CR1_CEN ;
+  TIM5_TimeBaseInit(TIM5_PRESCALER_16,(uint16_t)50);
+  TIM5->CR1 |= TIM5_CR1_CEN;
   TIM5->IER |= (uint8_t)TIM5_IT_UPDATE;
   while (1)
   {
@@ -32,12 +32,12 @@ void main(void)
     //GPIOB->ODR |= (uint8_t)(LED_GPIO_PINS);
     
    //testADC_Value();
-  // testADC_Filtr();
+   //testADC_Filtr();
    //testADC_Measurement();
    //testLED();
-   //Read_ADCval();
+   Read_ADCval();
+   
    // wfi();
-   Check_Tasks();
   }
 }
 

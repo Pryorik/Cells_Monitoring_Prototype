@@ -6,8 +6,8 @@
 void GPIO_init(void)
 {
     /* Initialize LEDs mounted on the Eval board */
-  //GPIO_Init(LED_GPIO_PORT, LED_GPIO_PINS, GPIO_MODE_OUT_PP_LOW_FAST);
-  
+  myGPIO_Init(LED_GPIO_PORT, LED_GPIO_PINS, GPIO_MODE_OUT_PP_LOW_FAST);
+  LED_GPIO_PORT->ODR &= (uint8_t)(~LED_GPIO_PINS);
   /*Initialize Outputs*/
   myGPIO_Init(GPIOA, BALANCING_1_PIN|DIVIDER_EN_PIN,  GPIO_MODE_OUT_PP_LOW_FAST);
   //GPIO_Init(DIVIDER_PORT,   DIVIDER_EN_PIN,  GPIO_MODE_OUT_PP_LOW_FAST);
